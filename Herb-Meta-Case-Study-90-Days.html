@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Herb · Meta Performance Case Study · First 90 Days</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
+<style>
+  /* Deck-matched palette */
+  :root {
+    --bg: #1A1A1A;
+    --panel: #222222;
+    --panel-line: #2E2E2E;
+    --ink: #FFFFFF;
+    --muted: #A8A8A8;
+    --soft: #6E6E6E;
+    --accent: #C5F048;
+    --accent-deep: #4D6620;
+    --accent-ink: #1A1A1A;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 16:9 page = 13.33in x 7.5in */
+  @page {
+    size: 13.33in 7.5in;
+    margin: 0;
+  }
+
+  .page {
+    width: 13.33in;
+    height: 7.5in;
+    background: var(--bg);
+    position: relative;
+    padding: 0.6in 0.75in 0.55in 0.75in;
+    page-break-after: always;
+    break-after: page;
+    overflow: hidden;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  /* Top tag (CMAAS) and page number tab */
+  .toptag {
+    position: absolute;
+    top: 0.34in;
+    left: 0.78in;
+    color: var(--soft);
+    font-size: 8.5pt;
+    letter-spacing: 0.22em;
+    font-weight: 600;
+  }
+  .pagenum {
+    position: absolute;
+    top: 0.32in;
+    right: 0.75in;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 800;
+    font-size: 11pt;
+    width: 0.36in;
+    height: 0.36in;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ---------- LOGO (matches deck) ---------- */
+  .logo {
+    position: absolute;
+    left: 0.7in;
+    bottom: 0.42in;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1;
+  }
+  .logo .mark {
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-family: 'Inter', sans-serif;
+    font-style: italic;
+    font-weight: 800;
+    font-size: 17pt;
+    padding: 7px 13px 6px 13px;
+    line-height: 1;
+    border-radius: 1px;
+    letter-spacing: -0.01em;
+  }
+  .logo .agency {
+    color: var(--ink);
+    font-size: 7.5pt;
+    letter-spacing: 0.42em;
+    font-weight: 700;
+    padding-left: 2px;
+  }
+
+  /* Footer right (small) */
+  .footer-r {
+    position: absolute;
+    right: 0.75in;
+    bottom: 0.55in;
+    color: var(--soft);
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+  }
+
+  /* Typography baselines */
+  h1, h2, h3 { font-weight: 700; line-height: 1.04; letter-spacing: -0.01em; }
+  h1 { font-size: 56pt; }
+  h2 { font-size: 36pt; }
+  h3 { font-size: 18pt; letter-spacing: -0.005em; }
+
+  .lead {
+    font-size: 12.5pt;
+    color: var(--muted);
+    line-height: 1.55;
+    max-width: 9.5in;
+    font-weight: 400;
+  }
+  .accent { color: var(--accent); font-style: italic; font-weight: 600; }
+
+  /* ---------- COVER ---------- */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+    padding-bottom: 0.55in;
+  }
+  .cover .eyebrow {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 12pt;
+    margin-bottom: 22px;
+    letter-spacing: 0.02em;
+  }
+  .cover h1 {
+    font-size: 66pt;
+    line-height: 0.96;
+    margin-bottom: 24px;
+    max-width: 11in;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+  }
+  .cover .sub {
+    font-size: 15pt;
+    color: var(--muted);
+    font-weight: 400;
+    max-width: 9.5in;
+    line-height: 1.5;
+  }
+  .cover .meta {
+    margin-top: 36px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 56px;
+    color: var(--muted);
+    font-size: 10.5pt;
+    max-width: 11in;
+  }
+  .cover .meta div { line-height: 1.5; }
+  .cover .meta b {
+    color: var(--ink);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    font-size: 9pt;
+    margin-right: 12px;
+    text-transform: uppercase;
+  }
+
+  /* ---------- SECTION TITLE ---------- */
+  .section-title h2 {
+    font-size: 32pt;
+    margin-bottom: 8px;
+    line-height: 1.05;
+  }
+  .section-title .deck {
+    color: var(--muted);
+    font-size: 12pt;
+    font-weight: 400;
+    max-width: 10in;
+    line-height: 1.55;
+  }
+
+  /* ---------- TWO-COL SECTION (Challenge / Approach) ---------- */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55in;
+    margin-top: 0.4in;
+    height: calc(100% - 1.85in);
+  }
+  .col {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: 8px;
+    padding: 30px 32px;
+    display: flex;
+    flex-direction: column;
+  }
+  .col .label {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 10.5pt;
+    letter-spacing: 0.04em;
+    margin-bottom: 14px;
+  }
+  .col h3 {
+    font-size: 22pt;
+    margin-bottom: 18px;
+    line-height: 1.1;
+  }
+  .col ul { list-style: none; }
+  .col li {
+    color: var(--ink);
+    font-size: 11pt;
+    line-height: 1.5;
+    padding: 11px 0 11px 22px;
+    position: relative;
+    border-bottom: 1px solid var(--panel-line);
+  }
+  .col li:last-child { border-bottom: none; }
+  .col li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 18px;
+    width: 10px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  /* ---------- 90-DAY ARC (3 month columns) ---------- */
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+    margin-top: 0.35in;
+    height: calc(100% - 1.95in);
+  }
+  .month {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: 8px;
+    padding: 24px 24px 20px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .month .top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .month .mlabel {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 10.5pt;
+    letter-spacing: 0.03em;
+  }
+  .month .phase {
+    color: var(--muted);
+    font-size: 8.5pt;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .month h3 {
+    font-size: 19pt;
+    margin-bottom: 18px;
+    line-height: 1.1;
+  }
+  .month .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 22px;
+    margin-bottom: 18px;
+  }
+  .stat .v {
+    font-weight: 700;
+    font-size: 17pt;
+    line-height: 1;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+  }
+  .stat .v .unit {
+    font-size: 10pt;
+    color: var(--muted);
+    font-weight: 500;
+    margin-left: 1px;
+  }
+  .stat .l {
+    color: var(--muted);
+    font-size: 8.5pt;
+    margin-top: 6px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .month .takeaway {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--panel-line);
+    color: var(--ink);
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+  .month .takeaway b { color: var(--accent); font-weight: 600; font-style: italic; }
+
+  /* ---------- HEADLINE NUMBERS ---------- */
+  .hero-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1.2fr 1fr;
+    gap: 18px;
+    margin-top: 0.4in;
+    height: calc(100% - 1.95in);
+  }
+  .hero {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: 8px;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .hero.big { grid-column: span 2; }
+  .hero .l {
+    color: var(--muted);
+    font-size: 9pt;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .hero .v {
+    font-weight: 800;
+    font-size: 38pt;
+    line-height: 1;
+    letter-spacing: -0.015em;
+  }
+  .hero.big .v { font-size: 56pt; }
+  .hero .v .unit {
+    font-size: 14pt;
+    color: var(--muted);
+    font-weight: 500;
+    margin-left: 4px;
+  }
+  .hero .delta {
+    color: var(--accent);
+    font-style: italic;
+    font-size: 10.5pt;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+
+  /* Trend bars row */
+  .trend-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 18px;
+    height: 2.4in;
+  }
+  .trend {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: 8px;
+    padding: 18px 22px 16px 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .trend .l {
+    color: var(--muted);
+    font-size: 9pt;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .trend .bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    height: 0.7in;
+    border-bottom: 1px solid var(--panel-line);
+    padding: 0 4px;
+  }
+  .trend .bar-cell {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    height: 100%;
+  }
+  .trend .bar-fill {
+    width: 100%;
+    background: var(--accent);
+    border-radius: 3px 3px 0 0;
+    min-height: 4px;
+  }
+  .trend .bar-fill.muted { background: var(--accent-deep); }
+  .trend .months {
+    display: flex;
+    gap: 16px;
+    padding: 12px 4px 0 4px;
+  }
+  .trend .months > div {
+    flex: 1;
+    text-align: center;
+  }
+  .trend .months .m {
+    color: var(--muted);
+    font-size: 8pt;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+  }
+  .trend .months .n {
+    color: var(--ink);
+    font-size: 11pt;
+    font-weight: 700;
+    margin-top: 6px;
+    line-height: 1;
+  }
+  .trend .delta {
+    color: var(--accent);
+    font-style: italic;
+    font-size: 10pt;
+    font-weight: 600;
+    margin-top: auto;
+    padding-top: 14px;
+  }
+
+  /* ---------- WHY IT WORKS ---------- */
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin-top: 0.35in;
+    height: calc(100% - 1.95in);
+  }
+  .why {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: 8px;
+    padding: 26px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .why .num {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 800;
+    font-size: 16pt;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+  .why h3 {
+    font-size: 17pt;
+    line-height: 1.18;
+    margin-bottom: 4px;
+  }
+  .why p {
+    color: var(--muted);
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+
+  /* ---------- CLOSING ---------- */
+  .close-wrap {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    max-width: 11in;
+    padding-bottom: 0.6in;
+  }
+  .close-wrap .eyebrow {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 600;
+    font-size: 12pt;
+    margin-bottom: 18px;
+    letter-spacing: 0.02em;
+  }
+  .close-wrap h2 {
+    font-size: 50pt;
+    line-height: 1.02;
+    margin-bottom: 20px;
+    letter-spacing: -0.015em;
+  }
+  .close-wrap p {
+    color: var(--muted);
+    font-size: 13pt;
+    line-height: 1.55;
+    max-width: 10in;
+  }
+  .cta-row {
+    display: flex;
+    gap: 14px;
+    margin-top: 30px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .pill {
+    background: var(--accent);
+    color: var(--accent-ink);
+    padding: 11px 20px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 10.5pt;
+    letter-spacing: 0.02em;
+  }
+  .pill.outline {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--panel-line);
+    padding: 10px 19px;
+  }
+  .pill.outline b {
+    color: var(--accent);
+    font-style: italic;
+    font-weight: 700;
+    margin-left: 4px;
+  }
+
+  /* Print niceties */
+  @media print {
+    html, body {
+      background: var(--bg) !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      color-adjust: exact;
+    }
+    .page { box-shadow: none; }
+    .screen-note { display: none; }
+  }
+
+  @media screen {
+    body { padding: 24px; }
+    .page {
+      box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+      margin: 0 auto 28px auto;
+    }
+    .screen-note {
+      max-width: 13.33in;
+      margin: 0 auto 18px auto;
+      padding: 14px 18px;
+      background: #232323;
+      border: 1px solid var(--panel-line);
+      border-radius: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      line-height: 1.5;
+    }
+    .screen-note b { color: var(--accent); font-style: italic; }
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== PAGE 1 · COVER =================== -->
+<section class="page">
+  <div class="toptag">CMAAS · CASE STUDY</div>
+  <div class="pagenum">01</div>
+
+  <div class="cover">
+    <div class="eyebrow">DTC Cannabis Brand · Meta Ads · 90-Day Performance</div>
+    <h1>The first 90 days,<br/>built for scale.</h1>
+    <p class="sub">From a dead account graveyard and broken attribution to <span class="accent">466 purchases, $56K in attributed revenue, and a 3.15x ROAS</span> by month three. One ad account. One funnel. No whack-a-mole.</p>
+    <div class="meta">
+      <div><b>Window</b>Dec 2025 – Feb 2026</div>
+      <div><b>Channel</b>Meta · Instagram + Facebook</div>
+      <div><b>Attribution</b>7-day click / 1-day view</div>
+      <div><b>Strategy</b>100% prospecting, suppression on</div>
+    </div>
+  </div>
+
+  <div class="logo">
+    <div class="mark">Herb</div>
+    <div class="agency">AGENCY</div>
+  </div>
+  <div class="footer-r">HERB.CO · HERB.AGENCY</div>
+</section>
+
+<!-- =================== PAGE 2 · SETUP =================== -->
+<section class="page">
+  <div class="toptag">CMAAS · THE SETUP</div>
+  <div class="pagenum">02</div>
+
+  <div class="section-title">
+    <h2>Where we started, and what we changed.</h2>
+    <p class="deck">The brand had the product, the audience, and the spend. What it did not have was a stable place to put media. We rebuilt the setup from the ground up.</p>
+  </div>
+
+  <div class="two-col">
+    <div class="col">
+      <div class="label">THE PROBLEM</div>
+      <h3>A funnel built on workarounds.</h3>
+      <ul>
+        <li>Repeated account shutdowns, reset learning data with every relaunch</li>
+        <li>Vague creative, no direct cannabis verbiage or imagery allowed</li>
+        <li>Cloaked landing pages, multi-click consumer journey to checkout</li>
+        <li>Attribution distrust, no reliable ROAS, no real CAC visibility</li>
+        <li>No senior media buyer or strategist owning the work</li>
+      </ul>
+    </div>
+    <div class="col">
+      <div class="label">THE APPROACH</div>
+      <h3>One account, direct funnel, real data.</h3>
+      <ul>
+        <li>Migrated to Herb's compliance ad account, direct relationship at Meta</li>
+        <li>Direct cannabis verbiage and imagery served native to feed</li>
+        <li>Direct-to-site funnel behind a simple age gate, no cloaking</li>
+        <li>100% prospecting with customer suppression in place from day one</li>
+        <li>Senior strategist + media buyer paired with full attribution dashboard</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="logo">
+    <div class="mark">Herb</div>
+    <div class="agency">AGENCY</div>
+  </div>
+  <div class="footer-r">90-DAY PERFORMANCE CASE STUDY</div>
+</section>
+
+<!-- =================== PAGE 3 · 90-DAY ARC =================== -->
+<section class="page">
+  <div class="toptag">CMAAS · THE ARC</div>
+  <div class="pagenum">03</div>
+
+  <div class="section-title">
+    <h2>One account. Three months. Compounding gains.</h2>
+    <p class="deck">Each month built on the previous. By Month 3, the system was scaling spend and improving efficiency at the same time, the signal that the foundation is right.</p>
+  </div>
+
+  <div class="month-grid">
+    <!-- Month 1 -->
+    <div class="month">
+      <div class="top">
+        <div class="mlabel">Month 1 · December 2025</div>
+        <div class="phase">Foundation</div>
+      </div>
+      <h3>Account warmed,<br/>profitable from go-live.</h3>
+      <div class="stats">
+        <div class="stat"><div class="v">269,518</div><div class="l">Impressions</div></div>
+        <div class="stat"><div class="v">$6,130</div><div class="l">Spend</div></div>
+        <div class="stat"><div class="v">126</div><div class="l">Purchases</div></div>
+        <div class="stat"><div class="v">$48.70</div><div class="l">Cost / Purchase</div></div>
+        <div class="stat"><div class="v">2.78<span class="unit">x</span></div><div class="l">Website ROAS</div></div>
+        <div class="stat"><div class="v">356</div><div class="l">Checkouts</div></div>
+      </div>
+      <div class="takeaway">Past the 1–2 week ad account warming window. Volume on, learning data accruing, <b>profitable from month one.</b></div>
+    </div>
+
+    <!-- Month 2 -->
+    <div class="month">
+      <div class="top">
+        <div class="mlabel">Month 2 · January 2026</div>
+        <div class="phase">Optimization</div>
+      </div>
+      <h3>Tightened audiences,<br/>cheaper purchases.</h3>
+      <div class="stats">
+        <div class="stat"><div class="v">198,048</div><div class="l">Impressions</div></div>
+        <div class="stat"><div class="v">$5,960</div><div class="l">Spend</div></div>
+        <div class="stat"><div class="v">140</div><div class="l">Purchases</div></div>
+        <div class="stat"><div class="v">$42.60</div><div class="l">Cost / Purchase</div></div>
+        <div class="stat"><div class="v">2.67<span class="unit">x</span></div><div class="l">Website ROAS</div></div>
+        <div class="stat"><div class="v">308</div><div class="l">Checkouts</div></div>
+      </div>
+      <div class="takeaway">Pulled back impressions to focus the system. Purchases up 11%, <b>CPP down 12.5%</b>, signal of a tightening, smarter funnel.</div>
+    </div>
+
+    <!-- Month 3 -->
+    <div class="month">
+      <div class="top">
+        <div class="mlabel">Month 3 · February 2026</div>
+        <div class="phase">Scale</div>
+      </div>
+      <h3>Spend up, efficiency up,<br/>ROAS expanding.</h3>
+      <div class="stats">
+        <div class="stat"><div class="v">249,753</div><div class="l">Impressions</div></div>
+        <div class="stat"><div class="v">$7,510</div><div class="l">Spend</div></div>
+        <div class="stat"><div class="v">200</div><div class="l">Purchases</div></div>
+        <div class="stat"><div class="v">$37.60</div><div class="l">Cost / Purchase</div></div>
+        <div class="stat"><div class="v">3.15<span class="unit">x</span></div><div class="l">Website ROAS</div></div>
+        <div class="stat"><div class="v">542</div><div class="l">Checkouts</div></div>
+      </div>
+      <div class="takeaway">Spend +26%, purchases +43%, ROAS +18% over month one. <b>The rare combination of scale and efficiency moving together.</b></div>
+    </div>
+  </div>
+
+  <div class="logo">
+    <div class="mark">Herb</div>
+    <div class="agency">AGENCY</div>
+  </div>
+  <div class="footer-r">DEC 2025 → FEB 2026</div>
+</section>
+
+<!-- =================== PAGE 4 · HEADLINE NUMBERS =================== -->
+<section class="page">
+  <div class="toptag">CMAAS · 90-DAY HEADLINES</div>
+  <div class="pagenum">04</div>
+
+  <div class="section-title">
+    <h2>The numbers that matter.</h2>
+    <p class="deck">Aggregate performance across the 90-day window. Real dollars in, real dollars out, real conversions to a real cart.</p>
+  </div>
+
+  <div class="hero-grid">
+    <div class="hero big">
+      <div class="l">90-Day Attributed Revenue</div>
+      <div>
+        <div class="v">$56,614</div>
+        <div class="delta">From $19,601 in spend · 2.89x blended ROAS</div>
+      </div>
+    </div>
+    <div class="hero big">
+      <div class="l">Purchases · Month 1 → Month 3</div>
+      <div>
+        <div class="v">126 → 200</div>
+        <div class="delta">+59% growth, same account, same funnel</div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="l">Total Purchases</div>
+      <div>
+        <div class="v">466</div>
+        <div class="delta">90-day total</div>
+      </div>
+    </div>
+    <div class="hero">
+      <div class="l">Cost / Purchase</div>
+      <div>
+        <div class="v">$37.60</div>
+        <div class="delta">Down 23% from $48.70</div>
+      </div>
+    </div>
+    <div class="hero">
+      <div class="l">ROAS · Month 3</div>
+      <div>
+        <div class="v">3.15<span class="unit">x</span></div>
+        <div class="delta">Up from 2.78x in Month 1</div>
+      </div>
+    </div>
+    <div class="hero">
+      <div class="l">Checkouts Initiated</div>
+      <div>
+        <div class="v">1,206</div>
+        <div class="delta">+52% Dec → Feb</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="logo">
+    <div class="mark">Herb</div>
+    <div class="agency">AGENCY</div>
+  </div>
+  <div class="footer-r">7-DAY CLICK / 1-DAY VIEW · 100% PROSPECTING</div>
+</section>
+
+<!-- =================== PAGE 5 · WHY IT COMPOUNDS =================== -->
+<section class="page">
+  <div class="toptag">CMAAS · WHY IT COMPOUNDS</div>
+  <div class="pagenum">05</div>
+
+  <div class="section-title">
+    <h2>Why this works, and keeps working.</h2>
+    <p class="deck">Compliance ad account access is the unlock, but it is the compounding system around it that makes the curve bend the right way.</p>
+  </div>
+
+  <div class="why-grid">
+    <div class="why">
+      <div class="num">01</div>
+      <h3>One account, one learning history.</h3>
+      <p>No shutdowns to recover from, no pixel data starting from scratch. The algorithm gets sharper every week, not reset every month.</p>
+    </div>
+    <div class="why">
+      <div class="num">02</div>
+      <h3>Direct-to-site, no funnel leakage.</h3>
+      <p>A simple age gate replaces cloaked pages and 6-click journeys. Less drop-off, cleaner intent, stronger landing page rates.</p>
+    </div>
+    <div class="why">
+      <div class="num">03</div>
+      <h3>100% prospecting with customer suppression.</h3>
+      <p>Existing customers excluded from prospecting audiences. Every dollar drives net-new acquisition. Remarketing handled separately by programmatic display.</p>
+    </div>
+    <div class="why">
+      <div class="num">04</div>
+      <h3>Real attribution, not last-click guesswork.</h3>
+      <p>7-day click / 1-day view, mapped to purchase events on the site. ROAS, CAC, and LTV visibility you can take to a board meeting.</p>
+    </div>
+  </div>
+
+  <div class="logo">
+    <div class="mark">Herb</div>
+    <div class="agency">AGENCY</div>
+  </div>
+  <div class="footer-r">A SYSTEM, NOT A CAMPAIGN</div>
+</section>
+
+<!-- =================== PAGE 6 · WHAT'S NEXT =================== -->
+<section class="page">
+  <div class="toptag">CMAAS · WHAT THIS COULD LOOK LIKE FOR YOU</div>
+  <div class="pagenum">06</div>
+
+  <div class="close-wrap">
+    <div class="eyebrow">What this could look like for your brand</div>
+    <h2>Same playbook.<br/>Different numbers. Same outcome.</h2>
+    <p>What you saw in this case study is the same system we run for every dispensary and DTC cannabis brand we partner with. Compliance ad account, direct-to-site funnel, real attribution, no whack-a-mole. The numbers will look different on your dashboard, but the playbook is the same.</p>
+
+    <div class="cta-row">
+      <div class="pill">Next step · 30-minute strategy call</div>
+    </div>
+  </div>
+
+  <div class="logo">
+    <div class="mark">Herb</div>
+    <div class="agency">AGENCY</div>
+  </div>
+  <div class="footer-r">CHRIS@HERB.CO · (905) 806-2100</div>
+</section>
+
+</body>
+</html>
